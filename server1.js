@@ -217,6 +217,8 @@ for (i=0; i<out.data.children.length; i++){
 			delete obj.is_video
 			delete obj.link_flair_text_color
 
+			
+
 			let query={_id:obj._id};
 			let findResult = await collection.findOne(query);
 
