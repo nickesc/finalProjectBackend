@@ -1,6 +1,5 @@
 const express=require("express");
 const bodyParser=require("body-parser");
-//const fs = require ("fs-extra");
 const cors=require("cors");
 const fetch = require("node-fetch");
 
@@ -24,99 +23,6 @@ async function connectDB(){
 };
 connectDB();
 
-async function getFeatured(req,res){
-	projection={name:1, year:1, cover:1}
-
-	let projectsCursor = await collection.find().project(projection);
-	let projects = await projectsCursor.toArray();
-
-	let rand1=Math.floor(Math.random() * projects.length);
-	let rand2=Math.floor(Math.random() * projects.length);
-	while(rand1===rand2){
-		rand2=Math.floor(Math.random() * projects.length);
-	}
-	let rand3=Math.floor(Math.random() * projects.length);
-	
-	const response=[projects[rand1],projects[rand2],projects[rand3].cover];
-
-	res.json(response);
-}
-
-async function getProjects(req,res){
-	projection={name:1, year:1, cover:1}
-
-	let query={category:"digital"}
-	let projectsCursor = await collection.find(query).project(projection);
-	let digital = await projectsCursor.toArray();
-
-	query={category:"photography"}
-	projectsCursor = await collection.find(query).project(projection);
-	let photography = await projectsCursor.toArray();
-
-	query={category:"physical"}
-	projectsCursor = await collection.find(query).project(projection);
-	let physical = await projectsCursor.toArray();
-
-	let projects={"digital":digital,"photography":photography,"physical":physical};
-
-	console.log(projects);
-
-	const response=projects;
-
-	res.json(response);
-}
-
-async function getContent(req,res){
-	projectID=req.params.project.toLowerCase();
-
-	let query={_id:projectID}
-
-	let projectsCursor = await collection.find(query);
-	let project = await projectsCursor.toArray();
-	console.log(project);
-
-	const response=project;
-
-	res.json(response);
-}
-
-async function postComment(req, res){
-	const projectID=req.params.project.toLowerCase();
-	const author = req.body.author;
-	const commentBody=req.body.commentBody;
-
-	const comment={
-		"author":req.body.author,
-		"commentBody":req.body.commentBody
-	};
-
-	let query={_id:projectID};
-
-	let projectsCursor = await collection.find(query).project({comments:1});
-	let project = await projectsCursor.toArray();
-	let newComments=project[0].comments;
-
-	newComments.push(comment)
-
-	console.log(newComments)
-
-	const filter = {_id:projectID.toLowerCase()};
-	const addComment={
-		$set:{
-			comments:newComments
-		}
-	}
-
-	const result = await collection.updateOne(filter,addComment)
-
-	const response=[
-		{matchedCount:result.matchedCount},
-		{modifiedCount:result.modifiedCount},
-		{comment:comment}
-	];
-	res.json(response);
-
-}
 async function getGB(req, res){
 	//projection={title:1, url:1, help:1}
 
@@ -141,6 +47,34 @@ async function getIC(req, res){
 
 	res.json(ic);
 
+}
+
+async function getOneGb(req,res){
+	postId=req.params.postId.toLowerCase();
+
+	let query={name:postId}
+
+	let gbCursor = await gbCollection.find(query);
+	let gb = await gbCursor.toArray();
+	console.log(gb);
+
+	const response=gb;
+
+	res.json(response);
+}
+
+async function getOneIc(req,res){
+	postId=req.params.postId.toLowerCase();
+
+	let query={name:postId}
+
+	let icCursor = await icCollection.find(query);
+	let ic = await icCursor.toArray();
+	console.log(ic);
+
+	const response=ic;
+
+	res.json(response);
 }
 
 async function updateList(out, collection, i){
@@ -238,6 +172,10 @@ async function updateList(out, collection, i){
 		delete post.wls
 		delete post.num_comments
 		delete post.link_flair_text
+		delete post.id
+		delete post.ups
+		delete post.total_awards_received
+		delete post.subreddit
 
 	}
 
@@ -314,14 +252,11 @@ async function findImage(post){
 	return "https://i.imgur.com/3KKc9Ox.png";
 }
 
-function detectURLs(message) {
-	var urlRegex = /(((https?:\/\/)|(www\.))[^(\))(\*)]+)/g;
-	return message.match(urlRegex).slice(0,)
-  }
-
 async function findTitle(post){
 
 	titleString = post.title
+	titleString=removeInvalidChars(titleString);
+
 	//console.log(titleString)
 	
 	let manuf = [
@@ -358,6 +293,8 @@ async function findTitle(post){
 	let manufIndex=-1
 	let startIndex=5
 	let endIndex=-1
+
+
 	
 	for (l=0; l<manuf.length; l++){
 		if (titleString.search(manuf[l])!=-1){
@@ -384,7 +321,7 @@ async function findTitle(post){
 		manufIndex=-1;
 	}
 
-	if (titleString.toLowerCase().indexOf("update")!=-1){
+	if (titleString.toLowerCase().indexOf("update")!=-1 || titleString.indexOf("PnC")!=-1 || titleString.indexOf("Swift65")!=-1){
 		manufIndex=-1;
 	}
 	
@@ -395,24 +332,40 @@ async function findTitle(post){
 	
 }
 
-//app.get("/projects",getProjects);
+function removeInvalidChars(string) {
+    string=string.replace(/([\uE000-\uF8FF]|\uD83C[\uDF00-\uDFFF]|\uD83D[\uDC00-\uDDFF])/g, '');
+	string=string.replace("Interest Check","")
+	string=string.replace("&amp;","&")
+	string=string.replace("is Live","")
+	string=string.replace("Official GB Date","")
+	string=string.replace("GB Date","")
+
+	
+	return string
+}
+
+function detectURLs(message) {
+	var urlRegex = /(((https?:\/\/)|(www\.))[^(\))(\*)]+)/g;
+	return message.match(urlRegex).slice(0,)
+}
+
 app.get("/gb",getGB);
 app.get("/ic",getIC)
-//app.get("/projects/:project",getContent);
-//app.get("/featured",getFeatured);
-//app.post("/comment/:project",jsonParser, postComment)
+app.get("/gb/:postId",getOneGb);
+app.get("/ic/:postId",getOneIc);
 
-var minutes = 1, the_interval = minutes * 60 * 1000;
+var seconds = 60, the_interval = seconds * 1000;
 setInterval(async function() {
 
 	let afterGB=["t3_mutcj3","t3_mikzfl"]
 	let afterIC=["t3_mamjhm","t3_ms9uuy"]
 	let afterText="&after="
 	
-	console.log("I am doing my 5 minutes check");
+	console.log("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nUpdating collections...\nRefresh interval: "+seconds+"  seconds\n\n");
 	let gbUrl="https://www.reddit.com/r/mechmarket/search/.json?q=flair%3A%22group%20buy%22&restrict_sr=1&sort=new&limit=100";
 	let icUrl="https://www.reddit.com/r/mechmarket/search/.json?q=flair%3A%22interest%20check%22&restrict_sr=1&sort=new&limit=100";
 	
+	/*
 	//third page
 
 	fetch(gbUrl+afterText+afterGB[1])
@@ -455,6 +408,7 @@ setInterval(async function() {
 		}
 	)
 		.catch(err => { throw err });
+	*/
 
 	//first page
 
@@ -477,15 +431,77 @@ setInterval(async function() {
 	)
 		.catch(err => { throw err });
 
-	
-	
-	
-
-
-
 }, the_interval);
+
+/*
+fetch(gbUrl)
+		.then(res => res.json())
+		.then((out) => async function() {
+			for (i=0; i<out.data.children.length; i++){
+				await updateList(out, gbCollection, i);
+
+				fetch(gbUrl+afterText+out.data.after)
+					.then(res => res.json())
+					.then((out) => {
+						for (b=0; b<out.data.children.length; b++){
+							updateList(out, gbCollection, b);
+
+							fetch(gbUrl+afterText+out.data.after)
+								.then(res => res.json())
+								.then((out) => {
+									for (b=0; b<out.data.children.length; b++){
+										updateList(out, gbCollection, b);
+
+							
+									}
+								}
+							)
+
+
+						}
+					}
+				)
+
+
+			}
+		}
+	)
+		.catch(err => { throw err });
+	fetch(icUrl)
+		.then(res => res.json())
+		.then((out) => {
+			for (i=0; i<out.data.children.length; i++){
+				updateList(out, icCollection, i);
+
+				fetch(icUrl+afterText+out.data.after)
+					.then(res => res.json())
+					.then((out) => {
+						for (b=0; b<out.data.children.length; b++){
+							updateList(out, icCollection, b);
+
+							fetch(icUrl+afterText+out.data.after)
+								.then(res => res.json())
+								.then((out) => {
+									for (b=0; b<out.data.children.length; b++){
+										updateList(out, icCollection, b);
+
+							
+									}
+								}
+							)
+
+
+						}
+					}
+				)
+			}
+		}
+	)
+		.catch(err => { throw err });
+}, the_interval);
+*/
 
 
 app.listen(5001, function(){
-	console.log("server is running on port 5001");
+	console.log("\nServer is running on port 5001");
 });
