@@ -221,9 +221,14 @@ async function findInfo(post){
 	let infoURL=""
 
 	for (d=0;d<urls.length;d++){
+		if(urls[d].indexOf("forms")!=-1 && post.link_flair_css_class.indexOf("interest")!=-1){
+			infoURL=urls[d]
+			break;
+		}
 		if (urls[d].indexOf("geekhack")!=-1 || urls[d].indexOf("cannonkeys")!=-1 ){
 			infoURL=urls[d]
 		}
+		
 	}
 
 	if (infoURL==""){
@@ -365,7 +370,7 @@ setInterval(async function() {
 	let gbUrl="https://www.reddit.com/r/mechmarket/search/.json?q=flair%3A%22group%20buy%22&restrict_sr=1&sort=new&limit=100";
 	let icUrl="https://www.reddit.com/r/mechmarket/search/.json?q=flair%3A%22interest%20check%22&restrict_sr=1&sort=new&limit=100";
 	
-	/*
+	
 	//third page
 
 	fetch(gbUrl+afterText+afterGB[1])
@@ -408,7 +413,7 @@ setInterval(async function() {
 		}
 	)
 		.catch(err => { throw err });
-	*/
+	
 
 	//first page
 
