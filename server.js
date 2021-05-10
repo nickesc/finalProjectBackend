@@ -24,7 +24,6 @@ async function connectDB(){
 connectDB();
 
 async function getGB(req, res){
-	//projection={title:1, url:1, help:1}
 
 	let query={help:"1"}
 	let gbCursor = await gbCollection.find();
@@ -37,7 +36,6 @@ async function getGB(req, res){
 }
 
 async function getIC(req, res){
-	//projection={title:1, url:1, help:1}
 
 	let query={help:"1"}
 	let icCursor = await icCollection.find();
@@ -81,7 +79,6 @@ async function updateList(out, collection, i){
 		
 	var post = out.data.children[i].data
 
-	//post._id=post.name;
 
 	if (true){ // in an if statement so i could collapse it in IDE
 		delete post.approved_at_utc;
@@ -244,7 +241,6 @@ async function findImage(post){
 
 	urls=detectURLs(bodyString)
 
-	//console.log(urls)
 	for (q=0;q<urls.length;q++){
 		if (urls[q].indexOf(".png")!=-1){
 			return urls[q]
@@ -262,7 +258,6 @@ async function findTitle(post){
 	titleString = post.title
 	titleString=removeInvalidChars(titleString);
 
-	//console.log(titleString)
 	
 	let manuf = [
 		" GMK ",
@@ -369,53 +364,6 @@ setInterval(async function() {
 	console.log("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nUpdating collections...\nRefresh interval: "+seconds+"  seconds\n\n");
 	let gbUrl="https://www.reddit.com/r/mechmarket/search/.json?q=flair%3A%22group%20buy%22&restrict_sr=1&sort=new&limit=100";
 	let icUrl="https://www.reddit.com/r/mechmarket/search/.json?q=flair%3A%22interest%20check%22&restrict_sr=1&sort=new&limit=100";
-	
-	
-	//third page
-
-	fetch(gbUrl+afterText+afterGB[1])
-		.then(res => res.json())
-		.then((out) => {
-			for (i=0; i<out.data.children.length; i++){
-				updateList(out, gbCollection, i);
-			}
-		}
-	)
-		.catch(err => { throw err });
-	fetch(icUrl+afterText+afterIC[1])
-		.then(res => res.json())
-		.then((out) => {
-			for (i=0; i<out.data.children.length; i++){
-				updateList(out, icCollection, i);
-			}
-		}
-	)
-		.catch(err => { throw err });
-	
-	//second page
-
-	fetch(gbUrl+afterText+afterGB[0])
-		.then(res => res.json())
-		.then((out) => {
-			for (i=0; i<out.data.children.length; i++){
-				updateList(out, gbCollection, i);
-			}
-		}
-	)
-		.catch(err => { throw err });
-	
-	fetch(icUrl+afterText+afterIC[0])
-		.then(res => res.json())
-		.then((out) => {
-			for (i=0; i<out.data.children.length; i++){
-				updateList(out, icCollection, i);
-			}
-		}
-	)
-		.catch(err => { throw err });
-	
-
-	//first page
 
 	fetch(gbUrl)
 		.then(res => res.json())
@@ -437,74 +385,6 @@ setInterval(async function() {
 		.catch(err => { throw err });
 
 }, the_interval);
-
-/*
-fetch(gbUrl)
-		.then(res => res.json())
-		.then((out) => async function() {
-			for (i=0; i<out.data.children.length; i++){
-				await updateList(out, gbCollection, i);
-
-				fetch(gbUrl+afterText+out.data.after)
-					.then(res => res.json())
-					.then((out) => {
-						for (b=0; b<out.data.children.length; b++){
-							updateList(out, gbCollection, b);
-
-							fetch(gbUrl+afterText+out.data.after)
-								.then(res => res.json())
-								.then((out) => {
-									for (b=0; b<out.data.children.length; b++){
-										updateList(out, gbCollection, b);
-
-							
-									}
-								}
-							)
-
-
-						}
-					}
-				)
-
-
-			}
-		}
-	)
-		.catch(err => { throw err });
-	fetch(icUrl)
-		.then(res => res.json())
-		.then((out) => {
-			for (i=0; i<out.data.children.length; i++){
-				updateList(out, icCollection, i);
-
-				fetch(icUrl+afterText+out.data.after)
-					.then(res => res.json())
-					.then((out) => {
-						for (b=0; b<out.data.children.length; b++){
-							updateList(out, icCollection, b);
-
-							fetch(icUrl+afterText+out.data.after)
-								.then(res => res.json())
-								.then((out) => {
-									for (b=0; b<out.data.children.length; b++){
-										updateList(out, icCollection, b);
-
-							
-									}
-								}
-							)
-
-
-						}
-					}
-				)
-			}
-		}
-	)
-		.catch(err => { throw err });
-}, the_interval);
-*/
 
 
 app.listen(5001, function(){
